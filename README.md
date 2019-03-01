@@ -172,10 +172,10 @@ Sotto la sezione resource va indicato sia il Repository(s3bucket) sia il pacchet
  
  Inoltre è necessario definire Environment e l'app Beanstalk dove deployare il pacchetto, cambiando i valori seguenti:
  
-- 
-      `"Configuration":{
+- `
+      "Configuration":{
                   "ApplicationName":"marco",
-                  "EnvironmentName":"marco-env"`
+                  "EnvironmentName":"marco-env" `
 
 Ed infine bisogna indicare la location dell'ArtifactStore:
 
