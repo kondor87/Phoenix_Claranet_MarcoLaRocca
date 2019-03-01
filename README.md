@@ -1,22 +1,23 @@
 # Phoenix_Claranet_MarcoLaRocca
-Phoenix Application Problem
 
+Phoenix Application Problem - Indice
+---
 Seguire le Fasi nell'ordine seguente:
-Fase1 - Creazione tramite CloudFormation dell'ambiente MONGODB
-Fase2 - Creazione dell'ambiente che ospitera l'applicazione tramite CloudFormation e Elastich Beanstalk
-Fase3 - Monitoraggio WEB APP e MONGODB
-Fase4 - Autoscaling WebApp
-Fase5 - Backup DB
-Fase6 - Creazione PIPELINE 
+- Fase1 - Creazione tramite CloudFormation dell'ambiente MONGODB
+- Fase2 - Creazione dell'ambiente che ospitera l'applicazione tramite CloudFormation e Elastich Beanstalk
+- Fase3 - Monitoraggio WEB APP e MONGODB
+- Fase4 - Autoscaling WebApp
+- Fase5 - Backup DB
+- Fase6 - Creazione PIPELINE 
 
 FASE 1 - Creazione tramite CloudFormation dell'ambiente MONGODB
-
+---
 In questa fase, tramite l'utilizzo di CloudFormation e seguendo le best pratices di Amazon andremo a creare un nuovo ambiente che includerà i seguenti oggetti:
-VPC
-Subnet
-Bastian Host in autoscaling per garantire alta affibabilità che ci consentirà di effettuare l'accesso nei server nelle subnet private
-Nat Gateway per consentire alle EC2 di andare su internet senza essere esposti al web.
-EC2 con a bordo il Database MongoDb.
+- VPC
+- Subnet
+- Bastian Host in autoscaling per garantire alta affibabilità che ci consentirà di effettuare l'accesso nei server nelle subnet private
+- Nat Gateway per consentire alle EC2 di andare su internet senza essere esposti al web.
+- EC2 con a bordo il Database MongoDb.
 
 Pre-Requisiti prima di lanciare il CF template:
 Creazione di una KEYPAIR per poter accedere ai server.
