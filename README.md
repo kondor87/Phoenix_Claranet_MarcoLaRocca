@@ -83,7 +83,7 @@ Al completamento dello stack per poter rendere utilizzabile l'App bisogna accede
 
 - Di default il CF di mongoDB (FASE1) crea un security group "SGperaccessoaiDB" per le istanze che devono connettersi ai db, inserire qui la regola per aprire le porte 27017 all'ip della webapp o al SG a cui è associata la WebApp , ed associare il SG "SGperaccessoaiDB"  ai DB.
 - Andiamo nella console di Elasitch Beanstalk ed eseguiamo le seguenti operazioni :
-  - Andiamo sull'app creata e clicchiamo su configurazione e successivamente clicchiamo su modifica nel riquadro Software
+  - Rechiamoci sull'app creata e clicchiamo su configurazione e successivamente clicchiamo su modifica nel riquadro Software
   - Impostiamo i seguenti parametri:
       - Server Proxy: Nessuno
       - Versione Node.js: 8.15
