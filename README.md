@@ -21,10 +21,11 @@ In questa fase, tramite l'utilizzo di CloudFormation e seguendo le best pratices
 
 Pre-Requisiti prima di lanciare il CF template:
 Creazione di una KEYPAIR per poter accedere ai server.
-All'interno di questo GIT è presente cloudformationMondoDb.yml.
+All'interno di questo GIT è presente :code:cloudformationMondoDb.yml 
+
 
 Creazione ambiente
-Procedere con la creazione di un nuovo stack importando il template cloudformationMondoDb.yml.
+Procedere con la creazione di un nuovo stack importando il template :code:`cloudformationMondoDb.yml`.
 
 Ci saranno una serie di campi in cui inserire dei parametri, lasciare tutto default ad eccezione dei seguenti valori:
 StackName --> nome dello stack CF
@@ -34,6 +35,7 @@ Allowed Bastian External Access CIDR --> Per consentire l'accesso al Bastian Hos
 KeyPair --> Selezionare la keypair creata
 MondoDB Admin username --> admin username
 MongoDB Password --> admin password.
+
 
 Lasciare tutto di default nei seguenti NEXT e flaggare i campi sotto la sezione CAPABILITIES.
 
