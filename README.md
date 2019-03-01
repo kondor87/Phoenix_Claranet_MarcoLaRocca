@@ -21,12 +21,10 @@ In questa fase, tramite l'utilizzo di CloudFormation e seguendo le best pratices
 - EC2 con a bordo il Database MongoDb.
 
 Pre-Requisiti prima di lanciare il CF template:
-Creazione di una KEYPAIR per poter accedere ai server.
-All'interno di questo GIT è presente `cloudformationMondoDb.yml`
+ - Creazione di una KEYPAIR per poter accedere ai server.
 
-
-Creazione ambiente
-Procedere con la creazione di un nuovo stack importando il template `cloudformationMondoDb.yml`.
+Passiamo adesso alla fase in ci andremo a creare il nostro ambiente con mongoDB a bordo.
+Procedere con la creazione di un nuovo stack su cloudformation importando il template `cloudformationMondoDb.yml`.
 
 Ci saranno una serie di campi in cui inserire dei parametri, lasciare tutto default ad eccezione dei seguenti valori:
 - StackName --> nome dello stack CF
@@ -38,7 +36,7 @@ Ci saranno una serie di campi in cui inserire dei parametri, lasciare tutto defa
 - MongoDB Password --> admin password.
 
 
-Lasciare tutto di default nei seguenti NEXT e flaggare i campi sotto la sezione CAPABILITIES.
+Lasciare tutto di default nei seguenti NEXT e flaggare i campi sotto la sezione CAPABILITIES nell'ultima pagina prima della creazione dello stack.
 
 Al termine di 10 minuti avremo tutto l'ambiente creato e in stato running.
 
