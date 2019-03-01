@@ -1,0 +1,313 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template Phoenix Beanstalk Environment.
+Parameters:
+  VPCId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC used to create resources
+  Subnets:
+    Description: Subnets
+    Type: List<AWS::EC2::Subnet::Id>
+  ELBScheme:
+    Description: ALB Type
+    Type: String
+    AllowedValues:
+    - internal
+    Default: internal    
+  ApplicationKeyPair:
+    Description: Amazon EC2 Key Pair
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: marco
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+    - t3.micro
+    - t3.small
+    - t3.medium
+    - t3.large
+    - t3.xlarge
+    - t3.2xlarge
+    Description: Instance Size
+  InstanceProfile:
+    Description: Instance Profile
+    Type: String
+    Default: aws-elasticbeanstalk-ec2-role
+  ApplicationName:
+    Description: Nome applicazione (Nuova o esistente)
+    Type: String
+    AllowedPattern: "^[a-zA-Z0-9-]+$"
+    Default: nuova-applicazione
+  EnvironmentName:
+    Description: Nome nuovo environment
+    Type: String
+    AllowedPattern: "^[a-z0-9-]+$"
+    Default: nuovo-environment    
+  PlatformArn:
+    Type: String
+    Default: platform/Node.js running on 64bit Amazon Linux/4.8.1
+    AllowedValues:
+    -  platform/Node.js running on 64bit Amazon Linux/4.8.1
+    Description: Enter Platform Type    
+  ServiceRole:
+    Description: Service Role
+    Type: String
+    Default: aws-elasticbeanstalk-service-role
+  HealthCheckPath:
+    Description: HealthCheck Path
+    Type: String
+    Default: /  
+  MatcherHTTPCode:
+    Description: Matcher HTTP Code
+    Type: String
+    Default: 200,302
+  SecurityGroups:
+    Description: SecurityGroups
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Default: sg-0047237361a8198aa
+  CreateApplicationCheck:
+    Type: String
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
+    Description: Allow or Deny Beanstalk Application creation. Default is yes
+  S3PackageBucket:
+    Description: Bucket S3 Source *** only lower case, number and -
+    Type: String
+    AllowedPattern: "^[a-z0-9-]+$"
+    Default: phoenixtest123
+  S3PackageKey:
+    Description: Bucket S3 Source *** only lower case, number, /, . and -
+    Type: String
+    AllowedPattern: "^[a-z0-9-/.]+$"
+    Default: cloud-phoenix-kata-master.zip
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Network Configuration
+      Parameters:
+      - VPCId
+      - Subnets
+      - ELBScheme
+    - Label:
+        default: EC2 Configuration
+      Parameters:
+      - ApplicationKeyPair
+      - InstanceType
+      - InstanceProfile
+    - Label:
+        default: Beanstalk Configuration
+      Parameters:
+      - CreateApplicationCheck
+      - ApplicationName
+      - EnvironmentName
+      - PlatformArn
+      - ServiceRole
+      - HealthCheckPath
+      - MatcherHTTPCode
+      - SecurityGroups
+      - S3PackageBucket
+      - S3PackageKey
+Conditions:
+  CreateApplication:
+    Fn::Equals:
+    - Ref: CreateApplicationCheck
+    - 'yes'
+  CreateEnvToNewApplication:
+    Fn::Equals:
+    - Ref: CreateApplicationCheck
+    - 'yes'    
+  CreateEnvToExistingApplication:
+    Fn::Equals:
+    - Ref: CreateApplicationCheck
+    - 'no'    
+Resources:
+  Application:
+    Type: AWS::ElasticBeanstalk::Application
+    Condition: CreateApplication
+    Properties:
+      ApplicationName:
+        Ref: ApplicationName
+      Description: 
+        Ref: ApplicationName
+      ApplicationVersions:
+        - Description: Version 1.0
+          SourceBundle:
+            S3Bucket: !Ref S3PackageBucket
+            S3Key: !Ref S3PackageKey
+          VersionLabel: Phoenix
+  Environment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Condition: CreateEnvToNewApplication
+    DependsOn: Application
+    Properties:
+      ApplicationName:
+        Ref: ApplicationName
+      CNAMEPrefix:
+          Fn::Join:
+          - '-'
+          - - 'phoenix'
+            - 'prova'
+            - Ref: EnvironmentName      
+      Description:
+        Ref: EnvironmentName
+      EnvironmentName:
+        Ref: EnvironmentName
+      OptionSettings:
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: EnvironmentType
+          Value: LoadBalanced  
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: ServiceRole
+          Value: !Ref ServiceRole
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: LoadBalancerType
+          Value: application
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          ResourceName: AWSEBAutoScalingLaunchConfiguration
+          OptionName: EC2KeyName
+          Value: !Ref ApplicationKeyPair
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          ResourceName: AWSEBAutoScalingLaunchConfiguration
+          OptionName: IamInstanceProfile
+          Value: !Ref InstanceProfile
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: InstanceType
+          Value: !Ref InstanceType
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          Namespace: aws:autoscaling:launchconfiguration
+          OptionName: SecurityGroups
+          Value:
+            Fn::Join:
+            - ","
+            - Ref: SecurityGroups
+        - Namespace: 'aws:autoscaling:launchconfiguration'         
+          OptionName: RootVolumeSize
+          ResourceName: AWSEBAutoScalingLaunchConfiguration
+          Value: 50
+        - Namespace: 'aws:autoscaling:asg'          
+          OptionName: MinSize
+          ResourceName: AWSEBAutoScalingGroup
+          Value: 1
+        - Namespace: 'aws:autoscaling:asg'          
+          OptionName: MaxSize
+          ResourceName: AWSEBAutoScalingGroup
+          Value: 2
+        - Namespace: 'aws:elasticbeanstalk:environment:process:default'
+          ResourceName: AWSEBV2LoadBalancerTargetGroup
+          OptionName: HealthCheckPath
+          Value: !Ref HealthCheckPath      
+        - Namespace: 'aws:elasticbeanstalk:environment:process:default'
+          ResourceName: AWSEBV2LoadBalancerTargetGroup
+          OptionName: MatcherHTTPCode
+          Value: !Ref MatcherHTTPCode
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: VPCId
+          Value: !Ref VPCId
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: Subnets
+          Value:
+            Fn::Join:
+            - ","
+            - Ref: Subnets
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: ELBScheme
+          Value: !Ref ELBScheme          
+      PlatformArn:
+          Fn::Join:
+          - ':'
+          - - 'arn'
+            - 'aws'
+            - 'elasticbeanstalk'
+            - Ref: AWS::Region
+            - ''
+            - Ref: PlatformArn
+      VersionLabel: Phoenix
+  EnvironmentToExistingApplication:
+    Type: AWS::ElasticBeanstalk::Environment
+    Condition: CreateEnvToExistingApplication
+    Properties:
+      ApplicationName:
+        Ref: ApplicationName
+      CNAMEPrefix:
+          Fn::Join:
+          - '-'
+          - - 'phoenix'
+            - 'prova'
+            - Ref: EnvironmentName      
+      Description:
+        Ref: EnvironmentName
+      EnvironmentName:
+        Ref: EnvironmentName
+      OptionSettings:
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: EnvironmentType
+          Value: LoadBalanced  
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: ServiceRole
+          Value: !Ref ServiceRole
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: LoadBalancerType
+          Value: application
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          ResourceName: AWSEBAutoScalingLaunchConfiguration
+          OptionName: EC2KeyName
+          Value: !Ref ApplicationKeyPair
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          ResourceName: AWSEBAutoScalingLaunchConfiguration
+          OptionName: IamInstanceProfile
+          Value: !Ref InstanceProfile
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: InstanceType
+          Value: !Ref InstanceType
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          Namespace: aws:autoscaling:launchconfiguration
+          OptionName: SecurityGroups
+          Value:
+            Fn::Join:
+            - ","
+            - Ref: SecurityGroups
+        - Namespace: 'aws:autoscaling:launchconfiguration'         
+          OptionName: RootVolumeSize
+          ResourceName: AWSEBAutoScalingLaunchConfiguration
+          Value: 50
+        - Namespace: 'aws:autoscaling:asg'          
+          OptionName: MinSize
+          ResourceName: AWSEBAutoScalingGroup
+          Value: 1
+        - Namespace: 'aws:autoscaling:asg'          
+          OptionName: MaxSize
+          ResourceName: AWSEBAutoScalingGroup
+          Value: 3
+        - Namespace: 'aws:elasticbeanstalk:environment:process:default'
+          ResourceName: AWSEBV2LoadBalancerTargetGroup
+          OptionName: HealthCheckPath
+          Value: !Ref HealthCheckPath      
+        - Namespace: 'aws:elasticbeanstalk:environment:process:default'
+          ResourceName: AWSEBV2LoadBalancerTargetGroup
+          OptionName: MatcherHTTPCode
+          Value: !Ref MatcherHTTPCode
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: VPCId
+          Value: !Ref VPCId
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: Subnets
+          Value:
+            Fn::Join:
+            - ","
+            - Ref: Subnets
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: ELBScheme
+          Value: !Ref ELBScheme          
+      PlatformArn:
+          Fn::Join:
+          - ':'
+          - - 'arn'
+            - 'aws'
+            - 'elasticbeanstalk'
+            - Ref: AWS::Region
+            - ''
+            - Ref: PlatformArn
+      VersionLabel: Phoenix      

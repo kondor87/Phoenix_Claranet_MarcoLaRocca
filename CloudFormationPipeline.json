@@ -1,0 +1,249 @@
+{
+  "Description":"Deploy an Elastic Beanstalk app stored in CodeCommit via CodePipeline. **WARNING** This template creates one or more Amazon EC2 instances and a CodePipeline pipeline. You will be billed for the AWS resources used if you create a stack from this template.",
+  "AWSTemplateFormatVersion":"2010-09-09",
+  "Parameters":{
+    "S3BucketSource": {
+      "Description": "Bucket S3 Source *** only lower case, number and -",
+      "Type": "String",
+      "AllowedPattern": "^[a-z0-9-]+$",
+      "Default": "phoenixAppS3"
+    },
+    "S3KeyPackage": {
+      "Description": "Bucket S3 key *** only lower case, number, /, . and -",
+      "Type": "String",
+      "AllowedPattern": "^[a-z0-9-/.]+$",
+      "Default": "cloud-phoenix-kata-master.zip"
+    },
+  },
+  "Metadata":{
+    "AWS::CloudFormation::Interface":{
+      "ParameterGroups":[
+        {
+          "Label":{
+            "default":"S3 Repository"
+          },
+          "Parameters":[
+            "S3BucketSource",
+            "S3KeyPackage"
+          ]
+        }
+      ],
+      "ParameterLabels":{
+        "S3BucketSource":{
+          "default":"S3 Repository Bucket"
+        },
+        "S3KeyPackage":{
+          "default":"S3 Repository Key"
+        }
+      }
+    }
+  },
+  "Resources":{
+    "CodePipelineRole":{
+      "Type":"AWS::IAM::Role",
+      "Properties":{
+        "AssumeRolePolicyDocument":{
+          "Statement":[
+            {
+              "Effect":"Allow",
+              "Principal":{
+                "Service":[
+                  "codepipeline.amazonaws.com"
+                ]
+              },
+              "Action":[
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path":"/",
+        "Policies":[
+          {
+            "PolicyName":"codepipeline-service",
+            "PolicyDocument":{
+              "Statement":[
+                {
+                  "Action":[
+                    "codecommit:GetBranch",
+                    "codecommit:GetCommit",
+                    "codecommit:UploadArchive",
+                    "codecommit:GetUploadArchiveStatus",
+                    "codecommit:CancelUploadArchive"
+                  ],
+                  "Resource":"*",
+                  "Effect":"Allow"
+                },
+                {
+                  "Action":[
+                    "s3:GetObject",
+                    "s3:GetObjectVersion",
+                    "s3:GetBucketVersioning"
+                  ],
+                  "Resource":"*",
+                  "Effect":"Allow"
+                },
+                {
+                  "Action":[
+                    "s3:PutObject"
+                  ],
+                  "Resource":[
+                    "arn:aws:s3:::codepipeline*",
+                    "arn:aws:s3:::elasticbeanstalk*"
+                  ],
+                  "Effect":"Allow"
+                },
+                {
+                  "Action":[
+                    "codedeploy:CreateDeployment",
+                    "codedeploy:GetApplicationRevision",
+                    "codedeploy:GetDeployment",
+                    "codedeploy:GetDeploymentConfig",
+                    "codedeploy:RegisterApplicationRevision"
+                  ],
+                  "Resource":"*",
+                  "Effect":"Allow"
+                },
+                {
+                  "Action":[
+                    "elasticbeanstalk:*",
+                    "ec2:*",
+                    "elasticloadbalancing:*",
+                    "autoscaling:*",
+                    "cloudwatch:*",
+                    "s3:*",
+                    "sns:*",
+                    "cloudformation:*",
+                    "rds:*",
+                    "sqs:*",
+                    "ecs:*",
+                    "iam:PassRole"
+                  ],
+                  "Resource":"*",
+                  "Effect":"Allow"
+                },
+                {
+                  "Action":[
+                    "lambda:InvokeFunction",
+                    "lambda:ListFunctions"
+                  ],
+                  "Resource":"*",
+                  "Effect":"Allow"
+                }
+              ],
+              "Version":"2012-10-17"
+            }
+          }
+        ]
+      }
+    },
+    "CodePipelineStack":{
+      "Type":"AWS::CodePipeline::Pipeline",
+      "Properties":{
+        "RoleArn":{
+          "Fn::Join":[
+            "",
+            [
+              "arn:aws:iam::",
+              {
+                "Ref":"AWS::AccountId"
+              },
+              ":role/",
+              {
+                "Ref":"CodePipelineRole"
+              }
+            ]
+          ]
+        },
+        "Stages":[
+          {
+            "Name":"Source",
+            "Actions":[
+              {
+                "InputArtifacts":[
+
+                ],
+                "Name":"Source",
+                "ActionTypeId":{
+                  "Category":"Source",
+                  "Owner":"AWS",
+                  "Version":"1",
+                  "Provider":"S3"
+                },
+                "OutputArtifacts":[
+                  {
+                    "Name":"MyApp"
+                  }
+                ],
+                "Configuration": {
+                  "S3Bucket": "phoenixmarco",
+                  "S3ObjectKey": "cloud-phoenix-kata-master.zip",
+                  "PollForSourceChanges": false
+                },
+                "RunOrder":1
+              }
+            ]
+          },
+          {
+            "Name":"Beta",
+            "Actions":[
+              {
+                "InputArtifacts":[
+                  {
+                    "Name":"MyApp"
+                  }
+                ],
+                "Name":"EbApp",
+                "ActionTypeId":{
+                  "Category":"Deploy",
+                  "Owner":"AWS",
+                  "Version":"1",
+                  "Provider":"ElasticBeanstalk"
+                },
+                "OutputArtifacts":[
+
+                ],
+                "Configuration":{
+                  "ApplicationName":"marco",
+                  "EnvironmentName":"marco-env"
+                },
+                "RunOrder":1
+              }
+            ]
+          }
+        ],
+        "ArtifactStore":{
+          "Type":"S3",
+          "Location":"phoenixmarco"
+        }
+      }
+    }
+  },
+  "Outputs":{
+    "CodePipelineURL":{
+      "Value":{
+        "Fn::Join":[
+          "",
+          [
+            "https://console.aws.amazon.com/codepipeline/home?region=",
+            {
+              "Ref":"AWS::Region"
+            },
+            "#/view/",
+            {
+              "Ref":"CodePipelineStack"
+            }
+          ]
+        ]
+      },
+      "Description":"Pipeline URL"
+    },
+    "CodePipelineRole":{
+      "Value":{
+        "Ref":"CodePipelineRole"
+      },
+      "Description":"The IAM role associated with CodePipeline pipeline"
+    }
+  
+  }
+}
